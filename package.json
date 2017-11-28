@@ -1,0 +1,21 @@
+{
+  "name": "node-red-contrib-mqttdb",
+  "version": "0.1.0",
+  "description": "MQTT Node with persistent message storage",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mike Blackstock",
+  "license": "SEE LICENSE IN LICENSE",
+  "node-red": {
+    "nodes": {
+      "mqttdb": "mqttdb.js"
+    }
+  },
+  "dependencies": {
+    "mqtt": "^2.14.0",
+    "mqtt-nedb-store": "^0.1.0",
+    "nedb": "^1.8.0"
+  }
+}
