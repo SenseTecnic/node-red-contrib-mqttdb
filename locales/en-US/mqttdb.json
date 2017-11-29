@@ -46,8 +46,7 @@
             "not-defined": "topic not defined",
             "missing-config": "missing broker configuration",
             "invalid-topic": "Invalid topic specified",
-            "nonclean-missingclientid": "No client ID set, using clean session",
-            "db-error": "Error saving to database"
+            "nonclean-missingclientid": "No client ID set, using clean session"
         }
     }
 }

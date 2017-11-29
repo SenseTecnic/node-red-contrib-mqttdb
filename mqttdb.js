@@ -258,24 +258,13 @@ module.exports = function (RED) {
                 });
 
                 // Register connect error handler
-                node.client.on('error', function (error) {
-                    // TODO: report errors better
-                    node.log('an error occurred: ' + error.toString());
+                node.client.on('error', function (error) {               
                     if (node.connecting) {
                         node.client.end();
                         node.connecting = false;
                     }
+                    node.error(error);
                 });
-
-                // node.client.on('message', function (topic, message, packet) {
-                //     node.log(JSON.stringify(packet));
-                // });
-                // node.client.on('packetsend', function (packet) {
-                //     node.log(JSON.stringify(packet));
-                // });
-                // node.client.on('packetreceive', function (packet) {
-                //     node.log(JSON.stringify(packet));
-                // });
             }
         };
 
