@@ -25,15 +25,11 @@ module.exports = function (RED) {
     var path = require("path");
     var fs = require("fs-extra");    
     var MQTTStore = require('mqtt-nedb-store');
-    var Datastore = require('nedb');
     
     var mqttDir = path.join(RED.settings.userDir, 'mqttdb');
 
     // create a directory if needed for the data
     fs.ensureDirSync(mqttDir);
-
-    // create store for the node info if needed
-    var brokerDb = new Datastore({ filename: path.join(mqttDir, 'brokers.db'), autoload: true });
 
     function matchTopic(ts, t) {
         if (ts == "#") {
@@ -321,29 +317,40 @@ module.exports = function (RED) {
                     qos: msg.qos || 0,
                     retain: msg.retain || false
                 };
-                setImmediate(function () {
-                    node.client.publish(msg.topic, msg.payload, options, function (err) {
-                        if (err) {
-                            node.error("error publishing message: " + err.toString());
-                        }
-                        return
-                    });
+                node.client.publish(msg.topic, msg.payload, options, function (err) {
+                    if (err) {
+                        node.error("error publishing message: " + err.toString());
+                    }
+                    return
                 });
             }
         };
 
-        this.on('close', function (done) {
+        function deleteStore(removed, done) {
+            if (removed) {
+                fs.remove(path.join(mqttDir,  n.id), function(err) {
+                    if (err) {
+                        node.warn("database delete failed: "+err.toString());
+                    }
+                    done();
+                });
+            } else {
+                done();
+            }
+        }
+        
+        this.on('close', function (removed, done) {
             this.closing = true;
             if (this.connected) {
                 this.client.once('close', function () {
-                    done();
+                    deleteStore(removed, done);
                 });
                 this.client.end();
             } else if (this.connecting || node.client.reconnecting) {
                 node.client.end();
-                done();
+                deleteStore(removed, done);
             } else {
-                done();
+                deleteStore(removed, done);
             }
         }); 
     }

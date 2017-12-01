@@ -37,7 +37,8 @@
 </script>
 
 <script type="text/x-red" data-help-name="mqttdb in">
-<p>Connects to a MQTT broker and subscribes to messages from the specified topic.</p>
+<p>Connects to a MQTT broker and subscribes to messages from the specified topic backed by a persistent
+message store.</p>
     <h3>Outputs</h3>
     <dl class="message-properties">
        <dt>payload <span class="property-type">string | buffer</span></dt>
@@ -65,7 +66,7 @@
             qos: {value: "2"},
             broker: {type:"mqttdb-broker", required:true}
         },
-        color:"#d8bfd8",
+        color:"#AAAA66",
         inputs:0,
         outputs:1,
         icon: "bridge.png",
@@ -114,7 +115,8 @@
 </script>
 
 <script type="text/x-red" data-help-name="mqttdb out">
-    <p>Connects to a MQTT broker and publishes messages.</p>
+    <p>Connects to a MQTT broker and publishes messages backed by a persistent
+message store.</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
        <dt>payload <span class="property-type">string | buffer</span></dt>
@@ -152,7 +154,7 @@
             retain: {value:""},
             broker: {type:"mqttdb-broker", required:true}
         },
-        color:"#d8bfd8",
+        color:"#AAAA66",
         inputs:1,
         outputs:0,
         icon: "bridge.png",
@@ -275,6 +277,13 @@
     <p>A minimum MQTT broker connection requires only a broker server address to be added to the default configuration.</p>
     <p>To secure the connection with SSL/TLS, a TLS Configuration must also be configured and selected.</p>
     <p>If you create a Client ID it must be unique to the broker you are connecting to.</p>
+    <p>Unlike the built in MQTT node, this broker connection will persist messages when connectivity is lost,
+    and between Node-RED restarts to reduce data loss.</p>
+    <p>To enable persistent storage for input and output messages, click on the appropriate check boxes.<p>
+    <p>Change the <em>compaction interval time</em> to compact the internal database and remove deleted messages.<p>
+    <p>Database files for a connection are stored in the Node-RED directory under the <em>mqttdb</em> directory.  These
+    can be safely removed after stopping Node-RED to clear unsent messages.  The database
+    used is <a target="_blank" href="https://github.com/louischatriot/nedb">NeDB.</a>
     <p>For more information about MQTT see the <a href="http://www.eclipse.org/paho/" target="_blank">Eclipse Paho</a> site.</p>
 </script>
 
