@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Modifications (c) 2017 Sense Tecnic Systems, Inc.  All rights reserved.
+ * Modifications Copyright 2017 Sense Tecnic Systems, Inc.
  **/
 
 module.exports = function (RED) {
