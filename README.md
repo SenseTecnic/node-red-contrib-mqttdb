@@ -9,6 +9,11 @@ The mqtt client used by the node is configured to store incoming and outgoing me
 Messages are stored in the mqttdb directory in the Node-RED directory.  In there, for each
 broker configuration node, here is a directory containing incoming and outgoing message collections.
 
+To enable persistent storage for input and output messages, click on the appropriate check boxes.  You can change the *compaction interval time* to compact the internal database and remove deleted messages.
+
+Database files for a connection are stored in the Node-RED directory under the *mqttdb* directory.  These can be safely removed after stopping Node-RED to clear unsent messages.  The database
+used is [NeDB](https://github.com/louischatriot/nedb).
+
 ### Known Issues
 
 1. When a broker connection node is configured to persist incoming messages, the messages can be corrupted.  We recommend only configuring outgoing persistence for now.
