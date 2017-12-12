@@ -5,8 +5,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository" : "https://github.com/SenseTecnic/node-red-contrib-mqttdb.git",
   "author": "Mike Blackstock",
   "license": "Apache-2.0",
+  "keywords": [ "node-red", "mqtt" ],
   "node-red": {
     "nodes": {
       "mqttdb": "mqttdb.js"
