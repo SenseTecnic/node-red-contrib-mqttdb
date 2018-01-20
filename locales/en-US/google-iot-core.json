@@ -1,22 +1,21 @@
 {
-    "mqttdb": {
+    "google-iot-core": {
         "label": {
             "broker": "Server",
             "example": "e.g. localhost",
             "qos": "QoS",
             "clientid": "Client ID",
+            "region": "Cloud region",
+            "projectid": "Project ID",
+            "deviceid": "Device ID",
+            "registryid": "Registry ID",
             "port": "Port",
             "keepalive": "Keep alive time (s)",
-            "cleansession": "Use clean session",
-            "use-tls": "Enable secure (SSL/TLS) connection",
             "tls-config":"TLS Configuration",
             "verify-server-cert":"Verify server certificate",
-            "compatmode": "Use legacy MQTT 3.1 support",
             "topic": "Topic",
             "name": "Name",
-            "username": "Username",            
-            "password": "Password",            
-            "payload": "Payload",           
+            "payload": "Payload",
             "persistout": "Persist outgoing messages",         
             "persistin": "Incoming messages",            
             "compactinterval": "Compaction interval time (s)"            
@@ -29,9 +28,9 @@
         },
         "placeholder": {
             "clientid": "Leave blank for auto generated",
-            "clientid-nonclean":"Must be set for non-clean sessions",
             "will-topic": "Leave blank to disable will message",
-            "birth-topic": "Leave blank to disable birth message"
+            "birth-topic": "Leave blank to disable birth message",
+            "region": "e.g. europe-west1"
         },
         "state": {
             "connected": "Connected to broker: __broker__",
@@ -46,7 +45,7 @@
             "not-defined": "topic not defined",
             "missing-config": "missing broker configuration",
             "invalid-topic": "Invalid topic specified",
-            "nonclean-missingclientid": "No client ID set, using clean session"
+            "missingclientid": "No client ID set"
         }
     }
 }

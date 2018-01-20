@@ -1,0 +1,399 @@
+<!--
+  Copyright JS Foundation and other contributors, http://js.foundation
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Modifications Copyright 2017 Sense Tecnic Systems, Inc.
+-->
+
+<script type="text/x-red" data-template-name="google-iot-core in">
+    <div class="form-row">
+        <label for="node-input-broker"><i class="fa fa-globe"></i> <span data-i18n="google-iot-core.label.broker"></span></label>
+        <input type="text" id="node-input-broker">
+    </div>
+    <div class="form-row">
+        <label for="node-input-qos"><i class="fa fa-empire"></i> <span data-i18n="google-iot-core.label.qos"></span></label>
+        <select id="node-input-qos" style="width:125px !important">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]google-iot-core.label.name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="google-iot-core in">
+<p>Connects to Google IoT core MQTT broker and subscribes to messages from the /devices/&lt;DeviceID&gt;/config topic backed by a persistent
+message store.</p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+       <dt>payload <span class="property-type">string | buffer</span></dt>
+       <dd>a string unless detected as a binary buffer.</dd>
+       <dt>qos <span class="property-type">number</span> </dt>
+       <dd>0, fire and forget - 1, at least once - 2, once and once only.</dd>
+       <dt>retain <span class="property-type">boolean</span></dt>
+       <dd>true indicates the message was retained and may be old.</dd>
+    </dl>
+    <h3>Details</h3>
+    <p>This node requires a connection to a MQTT broker to be configured. This is configured by clicking
+    the pencil icon.</p>
+    <p>Several MQTT nodes (in or out) can share the same broker connection if required.</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('google-iot-core in',{
+        category: 'input',
+        defaults: {
+            name: {value:""},
+            qos: {value: "2"},
+            broker: {type:"google-iot-core-broker", required:true}
+        },
+        color:"#AAAA66",
+        inputs:0,
+        outputs:1,
+        icon: "bridge.png",
+        label: function() {
+            return this.name||"google-iot-core";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+            if (this.qos === undefined) {
+                $("#node-input-qos").val("2");
+            }
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="google-iot-core out">
+    <div class="form-row">
+        <label for="node-input-broker"><i class="fa fa-globe"></i> <span data-i18n="google-iot-core.label.broker"></span></label>
+        <input type="text" id="node-input-broker">
+    </div>
+    <div class="form-row">
+        <label for="node-input-qos"><i class="fa fa-empire"></i> <span data-i18n="google-iot-core.label.qos"></span></label>
+        <select id="node-input-qos" style="width:125px !important">
+            <option value=""></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+        </select>
+        &nbsp;&nbsp;<i class="fa fa-history"></i>&nbsp;<span data-i18n="google-iot-core.retain"></span> &nbsp;<select id="node-input-retain" style="width:125px !important">
+            <option value=""></option>
+            <option value="false" data-i18n="google-iot-core.false"></option>
+            <option value="true" data-i18n="google-iot-core.true"></option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]google-iot-core.label.name">
+    </div>
+    <div class="form-tips"><span data-i18n="google-iot-core.tip"></span></div>
+</script>
+
+<script type="text/x-red" data-help-name="google-iot-core out">
+<p>Connects to Google IoT core MQTT broker and subscribes to messages from the /devices/&lt;DeviceID&gt;/events topic backed by a persistent
+message store.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+       <dt>payload <span class="property-type">string | buffer</span></dt>
+       <dd> most users prefer simple text payloads, but binary buffers can also be published.</dd>
+
+       <dt class="optional">qos <span class="property-type">number</span></dt>
+       <dd>0, fire and forget - 1, at least once - 2, once and once only. Default 0.</dd>
+
+       <dt class="optional">retain <span class="property-type">boolean</span></dt>
+       <dd>set to true to retain the message on the broker. Default false.</dd>
+    </dl>
+    <h3>Details</h3>
+    <code>msg.payload</code> is used as the payload of the published message.
+    If it contains an Object it will be converted to a JSON string before being sent.
+    If it contains a binary Buffer the message will be published as-is.</p>
+    <p>Likewise the QoS and retain values can be configured in the node or, if left
+    blank, set by <code>msg.qos</code> and <code>msg.retain</code> respectively. To clear a previously
+    retained topic from the broker, send a blank message to that topic with the retain flag set.</p>
+    <p>This node requires a connection to a MQTT broker to be configured. This is configured by clicking
+    the pencil icon.</p>
+    <p>Several MQTT nodes (in or out) can share the same broker connection if required.</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('google-iot-core out',{
+        category: 'output',
+        defaults: {
+            name: {value:""},
+            qos: {value:""},
+            retain: {value:""},
+            broker: {type:"google-iot-core-broker", required:true}
+        },
+        color:"#AAAA66",
+        inputs:1,
+        outputs:0,
+        icon: "bridge.png",
+        align: "right",
+        label: function() {
+            return this.name||"google-iot-core";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="google-iot-core-broker">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.name"></span></label>
+        <input type="text" id="node-config-input-name" data-i18n="[placeholder]google-iot-core.label.name">
+    </div>
+    <div class="form-row">
+        <ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-mqtt-broker-tabs"></ul>
+    </div>
+    <div id="node-config-mqtt-broker-tabs-content" style="min-height: 170px;">
+        <div id="mqtt-broker-tab-connection" style="display:none">
+            <div class="form-row node-input-broker">
+                <label for="node-config-input-broker"><i class="fa fa-globe"></i> <span data-i18n="google-iot-core.label.broker"></span></label>
+                <input class="input-append-left" type="text" id="node-config-input-broker" style="width:40%;" data-i18n="[placeholder]google-iot-core.label.example">
+                <label for="node-config-input-port" style="margin-left:20px; width:43px; "> <span data-i18n="google-iot-core.label.port"></span></label>
+                <input type="text" id="node-config-input-port" data-i18n="[placeholder]google-iot-core.label.port" style="width:55px">
+            </div>
+            <div class="form-row">
+                <label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-config-input-tls"><span data-i18n="google-iot-core.label.tls-config"></span></label><input style="width: 300px;" type="text" id="node-config-input-tls">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-clientid"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.clientid"></span></label>
+                <input type="text" id="node-config-input-clientid" data-i18n="[placeholder]google-iot-core.placeholder.clientid">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-projectid"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.projectid"></span></label>
+                <input type="text" id="node-config-input-projectid">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-region"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.region"></span></label>
+                <input type="text" id="node-config-input-region" data-i18n="[placeholder]google-iot-core.placeholder.region">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-registryid"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.registryid"></span></label>
+                <input type="text" id="node-config-input-registryid">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-deviceid"><i class="fa fa-tag"></i> <span data-i18n="google-iot-core.label.deviceid"></span></label>
+                <input type="text" id="node-config-input-deviceid">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-keepalive" style="width: auto"><i class="fa fa-clock-o"></i> <span data-i18n="google-iot-core.label.keepalive"></span></label>
+                <input type="text" id="node-config-input-keepalive" style="width: 50px">
+            </div>
+            <div class="form-row">
+                <input type="checkbox" id="node-config-input-persistout" style="display: inline-block; width: auto; vertical-align: top;">
+                <label for="node-config-input-persistout" style="width: auto;" data-i18n="google-iot-core.label.persistout"></label>
+                <input type="checkbox" id="node-config-input-persistin" style="margin-left: 30px; display: inline-block; width: auto; vertical-align: top;">
+                <label for="node-config-input-persistin" style="width: auto;" data-i18n="google-iot-core.label.persistin"></label>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-compactinterval" style="width: auto"><i class="fa fa-clock-o"></i> <span data-i18n="google-iot-core.label.compactinterval"></span></label>
+                <input type="text" id="node-config-input-compactinterval" style="width: 50px">
+            </div>
+        </div>
+        <div id="mqtt-broker-tab-birth" style="display:none">
+            <div class="form-row">
+                <label for="node-config-input-birthTopic"><i class="fa fa-tasks"></i> <span data-i18n="google-iot-core.label.topic"></span></label>
+                <input type="text" id="node-config-input-birthTopic" data-i18n="[placeholder]google-iot-core.placeholder.birth-topic">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-birthQos"><i class="fa fa-empire"></i> <span data-i18n="google-iot-core.label.qos"></span></label>
+                <select id="node-config-input-birthQos" style="width:125px !important">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+                &nbsp;&nbsp;<i class="fa fa-history"></i>&nbsp;<span data-i18n="google-iot-core.retain"></span> &nbsp;<select id="node-config-input-birthRetain" style="width:125px !important">
+                    <option value="false" data-i18n="google-iot-core.false"></option>
+                    <option value="true" data-i18n="google-iot-core.true"></option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-birthPayload"><i class="fa fa-envelope"></i> <span data-i18n="google-iot-core.label.payload"></span></label>
+                <input type="text" id="node-config-input-birthPayload" data-i18n="[placeholder]google-iot-core.label.payload">
+            </div>
+        </div>
+        <div id="mqtt-broker-tab-will" style="display:none">
+            <div class="form-row">
+                <label for="node-config-input-willTopic"><i class="fa fa-tasks"></i> <span data-i18n="google-iot-core.label.topic"></span></label>
+                <input type="text" id="node-config-input-willTopic" data-i18n="[placeholder]google-iot-core.placeholder.will-topic">
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-willQos"><i class="fa fa-empire"></i> <span data-i18n="google-iot-core.label.qos"></span></label>
+                <select id="node-config-input-willQos" style="width:125px !important">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+                &nbsp;&nbsp;<i class="fa fa-history"></i>&nbsp;<span data-i18n="google-iot-core.retain"></span> &nbsp;<select id="node-config-input-willRetain" style="width:125px !important">
+                    <option value="false" data-i18n="google-iot-core.false"></option>
+                    <option value="true" data-i18n="google-iot-core.true"></option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-willPayload"><i class="fa fa-envelope"></i> <span data-i18n="google-iot-core.label.payload"></span></label>
+                <input type="text" id="node-config-input-willPayload" data-i18n="[placeholder]google-iot-core.label.payload">
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="google-iot-core-broker">
+    <p>Host and port is already set to the Google IoT MQTT broker (no need to change)</p>
+    <p>You can either enter directly the MQTT Client-ID or enter Project-ID, Region, Registry-ID and Device-ID, the Client-ID
+    will be set automatically based on the given information.</p>
+    <p>Unlike the built in MQTT node, this broker connection will persist messages when connectivity is lost,
+    and between Node-RED restarts to reduce data loss.</p>
+    <p>To enable persistent storage for input and output messages, click on the appropriate check boxes.<p>
+    <p>Change the <em>compaction interval time</em> to compact the internal database and remove deleted messages.<p>
+    <p>Database files for a connection are stored in the Node-RED directory under the <em>google-iot-core</em> directory.  These
+    can be safely removed after stopping Node-RED to clear unsent messages.  The database
+    used is <a target="_blank" href="https://github.com/louischatriot/nedb">NeDB.</a>
+    <p>For more information about MQTT see the <a href="http://www.eclipse.org/paho/" target="_blank">Eclipse Paho</a> site.</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('google-iot-core-broker',{
+        category: 'config',
+        defaults: {
+            name: {value:""},
+            broker: {value:"mqtt.googleapis.com",required:true},
+            port: {value:443,required:true,validate:RED.validators.number()},
+            tls: {type:"tls-config",required: false},
+            clientid: {value:"", validate: function(v) {
+                    if ($("#node-config-input-clientid").length) {
+                        // Currently editing the node
+                        return $("#node-config-input-cleansession").is(":checked") || (v||"").length > 0;
+                    } else {
+                        return (this.cleansession===undefined || this.cleansession) || (v||"").length > 0;
+                    }
+                }},
+            projectid: {value:""},
+            registryid: {value:""},
+            deviceid: {value:""},
+            region: {value:""},
+            verifyservercert: { value: false},
+            keepalive: {value:60,validate:RED.validators.number()},
+            cleansession: {value: true},
+            willTopic: {value:""},
+            willQos: {value:"0"},
+            willRetain: {value:false},
+            willPayload: {value:""},
+            birthTopic: {value:""},
+            birthQos: {value:"0"},
+            birthRetain: {value:false},
+            birthPayload: {value:""},
+            persistout: {value:true},
+            persistin: {value:false},
+            compactinterval: {value:30,validate:RED.validators.number()}
+        },
+        label: function() {
+            var lab = this.name;
+            if ((lab === undefined) || (lab ==="")) {
+                var b = this.broker;
+                if (b === "") { b = "undefined"; }
+                lab = (this.clientid?this.clientid+"@":"")+b+":"+this.port;
+            }
+            return lab;
+        },
+        oneditprepare: function () {
+            var tabs = RED.tabs.create({
+                id: "node-config-mqtt-broker-tabs",
+                onchange: function(tab) {
+                    $("#node-config-mqtt-broker-tabs-content").children().hide();
+                    $("#" + tab.id).show();
+                }
+            });
+            tabs.addTab({
+                id: "mqtt-broker-tab-connection",
+                label: this._("google-iot-core.tabs-label.connection")
+            });
+            /* Disabled
+            tabs.addTab({
+                id: "mqtt-broker-tab-security",
+                label: this._("google-iot-core.tabs-label.security")
+            });
+            tabs.addTab({
+                id: "mqtt-broker-tab-birth",
+                label: this._("google-iot-core.tabs-label.birth")
+            });
+            tabs.addTab({
+                id: "mqtt-broker-tab-will",
+                label: this._("google-iot-core.tabs-label.will")
+            }); */
+            setTimeout(function() { tabs.resize(); },0);
+            if (typeof this.cleansession === 'undefined') {
+                this.cleansession = true;
+                $("#node-config-input-cleansession").prop("checked",true);
+            }
+            if (typeof this.keepalive === 'undefined') {
+                this.keepalive = 15;
+                $("#node-config-input-keepalive").val(this.keepalive);
+            }
+            if (typeof this.willQos === 'undefined') {
+                this.willQos = "0";
+                $("#node-config-input-willQos").val("0");
+            }
+            if (typeof this.birthQos === 'undefined') {
+                this.birthQos = "0";
+                $("#node-config-input-birthQos").val("0");
+            }
+
+            $("#node-config-input-clientid").on("blur", function() {
+                var clientid = $( this ).val();
+                if (clientid) {
+                    var parts = clientid.split('/');
+                    if (parts.length < 8) {
+                        return;
+                    }
+                    $("#node-config-input-projectid").val(parts[1]);
+                    $("#node-config-input-region").val(parts[3]);
+                    $("#node-config-input-registryid").val(parts[5]);
+                    $("#node-config-input-deviceid").val(parts[7]);
+                }
+            });
+
+            $("#node-config-input-projectid").on("blur", function() {
+                updateClientId();
+            });
+            $("#node-config-input-region").on("blur", function() {
+                updateClientId();
+            });
+            $("#node-config-input-registryid").on("blur", function() {
+                updateClientId();
+            });
+            $("#node-config-input-deviceid").on("blur", function() {
+                updateClientId();
+            });
+
+            function updateClientId() {
+                $("#node-config-input-clientid").val(
+                    'projects/' +
+                    $("#node-config-input-projectid").val() +
+                    '/locations/' +
+                    $("#node-config-input-region").val() +
+                    '/registries/' +
+                    $("#node-config-input-registryid").val() +
+                    '/devices/' +
+                    $("#node-config-input-deviceid").val()
+                );
+            }
+        },
+        oneditsave: function() {
+        }
+    });
+</script>

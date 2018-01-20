@@ -21,12 +21,12 @@ module.exports = function (RED) {
     var mqtt = require("mqtt");
     var util = require("util");
     var isUtf8 = require('is-utf8');
-
+    var jwt = require('jsonwebtoken');
     var path = require("path");
     var fs = require("fs-extra");    
     var MQTTStore = require('mqtt-nedb-store');
     
-    var mqttDir = path.join(RED.settings.userDir, 'mqttdb');
+    var mqttDir = path.join(RED.settings.userDir, 'google-iot-core');
 
     // create a directory if needed for the data
     fs.ensureDirSync(mqttDir);
@@ -39,6 +39,20 @@ module.exports = function (RED) {
         return re.test(t);
     }
 
+    // Create a Cloud IoT Core JWT for the given project id, signed with the given
+    // private key.
+    function createJwt (projectId, privateKey) {
+        // Create a JWT to authenticate this device. The device will be disconnected
+        // after the token expires, and will have to reconnect with a new token. The
+        // audience field should always be set to the GCP project id.
+        const token = {
+            'iat': Math.round(Date.now() / 1000),
+            'exp': Math.round(Date.now() / 1000) + 1 * 60,  // 20 minutes
+            'aud': projectId
+        };
+        return jwt.sign(token, privateKey, { algorithm: 'RS256' });
+    }
+
     function MQTTBrokerNode(n) {
 
         RED.nodes.createNode(this, n);
@@ -48,9 +62,9 @@ module.exports = function (RED) {
         this.broker = n.broker;
         this.port = n.port;
         this.clientid = n.clientid;
-        this.usetls = n.usetls;
+        this.projectid = n.projectid;
+        this.deviceid = n.deviceid;
         this.verifyservercert = n.verifyservercert;
-        this.compatmode = n.compatmode;
         this.keepalive = n.keepalive;
         this.cleansession = n.cleansession;
         this.compactinterval = n.compactinterval;
@@ -75,19 +89,6 @@ module.exports = function (RED) {
             };
         }
 
-        if (this.credentials) {
-            this.username = this.credentials.user;
-            this.password = this.credentials.password;
-        }
-
-        // If the config node is missing certain options (it was probably deployed prior to an update to the node code),
-        // select/generate sensible options for the new fields
-        if (typeof this.usetls === 'undefined') {
-            this.usetls = false;
-        }
-        if (typeof this.compatmode === 'undefined') {
-            this.compatmode = true;
-        }
         if (typeof this.verifyservercert === 'undefined') {
             this.verifyservercert = false;
         }
@@ -102,11 +103,7 @@ module.exports = function (RED) {
 
         // Create the URL to pass in to the MQTT.js library
         if (this.brokerurl === "") {
-            if (this.usetls) {
-                this.brokerurl = "mqtts://";
-            } else {
-                this.brokerurl = "mqtt://";
-            }
+            this.brokerurl = "mqtts://";
             if (this.broker !== "") {
                 this.brokerurl = this.brokerurl + this.broker + ":" + this.port;
             } else {
@@ -114,30 +111,25 @@ module.exports = function (RED) {
             }
         }
 
-        if (!this.cleansession && !this.clientid) {
-            this.cleansession = true;
-            this.warn(RED._("mqttdb.errors.nonclean-missingclientid"));
+        if (!this.clientid) {
+            this.warn(RED._("google-iot-core.errors.missingclientid"));
         }
 
         // Build options for passing to the MQTT.js API
-        this.options.clientId = this.clientid || 'mqtt_' + (1 + Math.random() * 4294967295).toString(16);
-        this.options.username = this.username;
-        this.options.password = this.password;
+        this.options.clientId = this.clientid;
+        this.options.username = 'unused';
         this.options.keepalive = this.keepalive;
         this.options.clean = this.cleansession;
         this.options.reconnectPeriod = RED.settings.mqttReconnectTime || 5000;
         this.options.connectTimeout = 30000;
 
-        if (this.compatmode == "true" || this.compatmode === true) {
-            this.options.protocolId = 'MQIsdp';
-            this.options.protocolVersion = 3;
-        }
-        if (this.usetls && n.tls) {
+        if (n.tls) {
             var tlsNode = RED.nodes.getNode(n.tls);
             if (tlsNode) {
                 tlsNode.addTLSOptions(this.options);
             }
         }
+        this.options.password = createJwt(this.projectid, this.options.key);
 
         // configure db storage
         if (this.persistin) {
@@ -201,7 +193,7 @@ module.exports = function (RED) {
                 node.client.on('connect', function () {
                     node.connecting = false;
                     node.connected = true;
-                    node.log(RED._("mqttdb.state.connected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
+                    node.log(RED._("google-iot-core.state.connected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
                     for (var id in node.users) {
                         if (node.users.hasOwnProperty(id)) {
                             node.users[id].status({ fill: "green", shape: "dot", text: "node-red:common.status.connected" });
@@ -240,16 +232,18 @@ module.exports = function (RED) {
                 })
                 // Register disconnect handlers
                 node.client.on('close', function () {
+                    // refresh JWT token
+                    node.options.password = createJwt(node.projectid, node.options.key);
                     if (node.connected) {
                         node.connected = false;
-                        node.log(RED._("mqttdb.state.disconnected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
+                        node.log(RED._("google-iot-core.state.disconnected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
                         for (var id in node.users) {
                             if (node.users.hasOwnProperty(id)) {
                                 node.users[id].status({ fill: "red", shape: "ring", text: "node-red:common.status.disconnected" });
                             }
                         }
                     } else if (node.connecting) {
-                        node.log(RED._("mqttdb.state.connect-failed", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
+                        node.log(RED._("google-iot-core.state.connect-failed", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
                     }
                 });
 
@@ -355,7 +349,7 @@ module.exports = function (RED) {
         }); 
     }
 
-    RED.nodes.registerType("mqttdb-broker", MQTTBrokerNode, {
+    RED.nodes.registerType("google-iot-core-broker", MQTTBrokerNode, {
         credentials: {
             user: { type: "text" },
             password: { type: "password" }
@@ -364,15 +358,15 @@ module.exports = function (RED) {
 
     function MQTTInNode(n) {
         RED.nodes.createNode(this, n);
-        this.topic = n.topic;
         this.qos = parseInt(n.qos);
         if (isNaN(this.qos) || this.qos < 0 || this.qos > 2) {
             this.qos = 2;
         }
         this.broker = n.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
+        this.topic = '/devices/' + this.brokerConn.deviceid + '/config';
         if (!/^(#$|(\+|[^+#]*)(\/(\+|[^+#]*))*(\/(\+|#|[^+#]*))?$)/.test(this.topic)) {
-            return this.warn(RED._("mqttdb.errors.invalid-topic"));
+            return this.warn(RED._("google-iot-core.errors.invalid-topic"));
         }
         var node = this;
         if (this.brokerConn) {
@@ -392,7 +386,7 @@ module.exports = function (RED) {
                 }
             }
             else {
-                this.error(RED._("mqttdb.errors.not-defined"));
+                this.error(RED._("google-iot-core.errors.not-defined"));
             }
             this.on('close', function (done) {
                 if (node.brokerConn) {
@@ -401,18 +395,18 @@ module.exports = function (RED) {
                 }
             });
         } else {
-            this.error(RED._("mqttdb.errors.missing-config"));
+            this.error(RED._("google-iot-core.errors.missing-config"));
         }
     }
-    RED.nodes.registerType("mqttdb in", MQTTInNode);
+    RED.nodes.registerType("google-iot-core in", MQTTInNode);
 
     function MQTTOutNode(n) {
         RED.nodes.createNode(this, n);
-        this.topic = n.topic;
         this.qos = n.qos || null;
         this.retain = n.retain;
         this.broker = n.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
+        this.topic = '/devices/' + this.brokerConn.deviceid + '/events';
         var node = this;
 
         if (this.brokerConn) {
@@ -434,7 +428,7 @@ module.exports = function (RED) {
                     if (msg.hasOwnProperty("topic") && (typeof msg.topic === "string") && (msg.topic !== "")) { // topic must exist
                         this.brokerConn.publish(msg);  // send the message
                     }
-                    else { node.warn(RED._("mqttdb.errors.invalid-topic")); }
+                    else { node.warn(RED._("google-iot-core.errors.invalid-topic")); }
                 }
             });
             if (this.brokerConn.connected) {
@@ -445,8 +439,8 @@ module.exports = function (RED) {
                 node.brokerConn.deregister(node, done);
             });
         } else {
-            this.error(RED._("mqttdb.errors.missing-config"));
+            this.error(RED._("google-iot-core.errors.missing-config"));
         }
     }
-    RED.nodes.registerType("mqttdb out", MQTTOutNode);
+    RED.nodes.registerType("google-iot-core out", MQTTOutNode);
 };
