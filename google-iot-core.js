@@ -47,7 +47,7 @@ module.exports = function (RED) {
         // audience field should always be set to the GCP project id.
         const token = {
             'iat': Math.round(Date.now() / 1000),
-            'exp': Math.round(Date.now() / 1000) + 1 * 60,  // 20 minutes
+            'exp': Math.round(Date.now() / 1000) + 60 * 60,  // 60 minutes
             'aud': projectId
         };
         return jwt.sign(token, privateKey, { algorithm: 'RS256' });
