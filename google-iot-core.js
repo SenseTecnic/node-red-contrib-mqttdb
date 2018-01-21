@@ -233,7 +233,7 @@ module.exports = function (RED) {
                 // Register disconnect handlers
                 node.client.on('close', function () {
                     // refresh JWT token
-                    node.options.password = createJwt(node.projectid, node.options.key);
+                    node.client.options.password = createJwt(node.projectid, node.options.key);
                     if (node.connected) {
                         node.connected = false;
                         node.log(RED._("google-iot-core.state.disconnected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
@@ -248,7 +248,9 @@ module.exports = function (RED) {
                 });
 
                 // Register connect error handler
-                node.client.on('error', function (error) {               
+                node.client.on('error', function (error) {
+                    // refresh JWT token
+                    node.client.options.password = createJwt(node.projectid, node.options.key);
                     if (node.connecting) {
                         node.client.end();
                         node.connecting = false;
