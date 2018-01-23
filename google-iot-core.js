@@ -351,18 +351,11 @@ module.exports = function (RED) {
         }); 
     }
 
-    RED.nodes.registerType("google-iot-core-broker", MQTTBrokerNode, {
-        credentials: {
-            user: { type: "text" },
-            password: { type: "password" }
-        }
-    });
-
     function MQTTInNode(n) {
         RED.nodes.createNode(this, n);
         this.qos = parseInt(n.qos);
-        if (isNaN(this.qos) || this.qos < 0 || this.qos > 2) {
-            this.qos = 2;
+        if (isNaN(this.qos) || this.qos < 0 || this.qos > 1) {
+            this.qos = 1;
         }
         this.broker = n.broker;
         this.brokerConn = RED.nodes.getNode(this.broker);
@@ -402,6 +395,9 @@ module.exports = function (RED) {
     }
     RED.nodes.registerType("google-iot-core in", MQTTInNode);
 
+    RED.nodes.registerType("google-iot-core-broker", MQTTBrokerNode, {
+    });
+
     function MQTTOutNode(n) {
         RED.nodes.createNode(this, n);
         this.qos = n.qos || null;
@@ -416,7 +412,7 @@ module.exports = function (RED) {
             this.on("input", function (msg) {
                 if (msg.qos) {
                     msg.qos = parseInt(msg.qos);
-                    if ((msg.qos !== 0) && (msg.qos !== 1) && (msg.qos !== 2)) {
+                    if ((msg.qos !== 0) && (msg.qos !== 1)) {
                         msg.qos = null;
                     }
                 }
