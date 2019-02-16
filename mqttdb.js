@@ -304,26 +304,25 @@ module.exports = function (RED) {
         };
 
         this.publish = function (msg) {
-            if (node.connected) {
-                if (!Buffer.isBuffer(msg.payload)) {
-                    if (typeof msg.payload === "object") {
-                        msg.payload = JSON.stringify(msg.payload);
-                    } else if (typeof msg.payload !== "string") {
-                        msg.payload = "" + msg.payload;
-                    }
+            // always publish in case we are temporarily disconnected
+            if (!Buffer.isBuffer(msg.payload)) {
+                if (typeof msg.payload === "object") {
+                    msg.payload = JSON.stringify(msg.payload);
+                } else if (typeof msg.payload !== "string") {
+                    msg.payload = "" + msg.payload;
                 }
-
-                var options = {
-                    qos: msg.qos || 0,
-                    retain: msg.retain || false
-                };
-                node.client.publish(msg.topic, msg.payload, options, function (err) {
-                    if (err) {
-                        node.error("error publishing message: " + err.toString());
-                    }
-                    return
-                });
             }
+
+            var options = {
+                qos: msg.qos || 0,
+                retain: msg.retain || false
+            };
+            node.client.publish(msg.topic, msg.payload, options, function (err) {
+                if (err) {
+                    node.error("error publishing message: " + err.toString());
+                }
+                return
+            });
         };
 
         function deleteStore(removed, done) {
