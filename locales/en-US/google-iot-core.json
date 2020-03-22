@@ -15,6 +15,7 @@
             "verify-server-cert":"Verify server certificate",
             "topic": "Topic",
             "name": "Name",
+            "subfolder": "Subfolder",
             "payload": "Payload",
             "persistout": "Persist outgoing messages",         
             "persistin": "Incoming messages",            
