@@ -406,7 +406,7 @@ module.exports = function (RED) {
         this.subfolder = n.subfolder;
         this.brokerConn = RED.nodes.getNode(this.broker);
 
-        if (strValue) {
+        if (this.subfolder) {
             this.topic = '/devices/' + this.brokerConn.deviceid + '/events/' + this.subfolder;
         } else {
             this.topic = '/devices/' + this.brokerConn.deviceid + '/events';

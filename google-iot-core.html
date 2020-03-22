@@ -72,6 +72,11 @@ message store.</p>
             if (this.qos === undefined) {
                 $("#node-input-qos").val("2");
             }
+        },
+        oneditprepare: function() {
+            if (this.subfolder === undefined) {
+                $("#node-input-subfolder").val("");
+            }
         }
     });
 </script>
@@ -137,6 +142,7 @@ message store.</p>
         category: 'output',
         defaults: {
             name: {value:""},
+            subfolder: {value:""},
             qos: {value:""},
             retain: {value:""},
             broker: {type:"google-iot-core-broker", required:true}
