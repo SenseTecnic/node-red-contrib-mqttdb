@@ -187,76 +187,72 @@ module.exports = function (RED) {
         this.connect = function () {
             if (!node.connected && !node.connecting) {
                 node.connecting = true;
-                node.client = mqtt.connect(node.brokerurl, node.options);
-                node.client.setMaxListeners(0);
-                // Register successful connect or reconnect handler
-                node.client.on('connect', function () {
-                    node.connecting = false;
-                    node.connected = true;
-                    node.log(RED._("google-iot-core.state.connected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
-                    for (var id in node.users) {
-                        if (node.users.hasOwnProperty(id)) {
-                            node.users[id].status({ fill: "green", shape: "dot", text: "node-red:common.status.connected" });
-                        }
-                    }
-                    // Remove any existing listeners before resubscribing to avoid duplicates in the event of a re-connection
-                    node.client.removeAllListeners('message');
-
-                    // Re-subscribe to stored topics
-                    for (var s in node.subscriptions) {
-                        if (node.subscriptions.hasOwnProperty(s)) {
-                            var topic = s;
-                            var qos = 0;
-                            for (var r in node.subscriptions[s]) {
-                                if (node.subscriptions[s].hasOwnProperty(r)) {
-                                    qos = Math.max(qos, node.subscriptions[s][r].qos);
-                                    node.client.on('message', node.subscriptions[s][r].handler);
-                                }
-                            }
-                            var options = { qos: qos };
-                            node.client.subscribe(topic, options);
-                        }
-                    }
-
-                    // Send any birth message
-                    if (node.birthMessage) {
-                        node.publish(node.birthMessage);
-                    }
-                });
-                node.client.on("reconnect", function () {
-                    for (var id in node.users) {
-                        if (node.users.hasOwnProperty(id)) {
-                            node.users[id].status({ fill: "yellow", shape: "ring", text: "node-red:common.status.connecting" });
-                        }
-                    }
-                })
-                // Register disconnect handlers
-                node.client.on('close', function () {
-                    // refresh JWT token
-                    node.client.options.password = createJwt(node.projectid, node.options.key);
-                    if (node.connected) {
-                        node.connected = false;
-                        node.log(RED._("google-iot-core.state.disconnected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
+                try {
+                    node.client = mqtt.connect(node.brokerurl, node.options);
+                    node.client.setMaxListeners(0);
+                    // Register successful connect or reconnect handler
+                    node.client.on('connect', function () {
+                        node.connecting = false;
+                        node.connected = true;
+                        node.log(RED._("google-iot-core.state.connected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
                         for (var id in node.users) {
                             if (node.users.hasOwnProperty(id)) {
-                                node.users[id].status({ fill: "red", shape: "ring", text: "node-red:common.status.disconnected" });
+                                node.users[id].status({ fill: "green", shape: "dot", text: "node-red:common.status.connected" });
                             }
                         }
-                    } else if (node.connecting) {
-                        node.log(RED._("google-iot-core.state.connect-failed", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
-                    }
-                });
+                        // Remove any existing listeners before resubscribing to avoid duplicates in the event of a re-connection
+                        node.client.removeAllListeners('message');
 
-                // Register connect error handler
-                node.client.on('error', function (error) {
-                    // refresh JWT token
-                    node.client.options.password = createJwt(node.projectid, node.options.key);
-                    if (node.connecting) {
-                        node.client.end();
-                        node.connecting = false;
-                    }
-                    node.error(error);
-                });
+                        // Re-subscribe to stored topics
+                        for (var s in node.subscriptions) {
+                            if (node.subscriptions.hasOwnProperty(s)) {
+                                var topic = s;
+                                var qos = 0;
+                                for (var r in node.subscriptions[s]) {
+                                    if (node.subscriptions[s].hasOwnProperty(r)) {
+                                        qos = Math.max(qos, node.subscriptions[s][r].qos);
+                                        node.client.on('message', node.subscriptions[s][r].handler);
+                                    }
+                                }
+                                var options = { qos: qos };
+                                node.client.subscribe(topic, options);
+                            }
+                        }
+
+                        // Send any birth message
+                        if (node.birthMessage) {
+                            node.publish(node.birthMessage);
+                        }
+                    });
+                    node.client.on("reconnect", function () {
+                        for (var id in node.users) {
+                            if (node.users.hasOwnProperty(id)) {
+                                node.users[id].status({ fill: "yellow", shape: "ring", text: "node-red:common.status.connecting" });
+                            }
+                        }
+                    })
+                    // Register disconnect handlers
+                    node.client.on('close', function () {
+                        // refresh JWT token
+                        node.client.options.password = createJwt(node.projectid, node.options.key);
+                        if (node.connected) {
+                            node.connected = false;
+                            node.log(RED._("google-iot-core.state.disconnected", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
+                            for (var id in node.users) {
+                                if (node.users.hasOwnProperty(id)) {
+                                    node.users[id].status({ fill: "red", shape: "ring", text: "node-red:common.status.disconnected" });
+                                }
+                            }
+                        } else if (node.connecting) {
+                            node.log(RED._("google-iot-core.state.connect-failed", { broker: (node.clientid ? node.clientid + "@" : "") + node.brokerurl }));
+                        }
+                    });
+
+                    // The client's own reconnect logic will take care of errors
+                    node.client.on('error', function (error) {});
+                }catch(err) {
+                    console.log(err);
+                }
             }
         };
 
