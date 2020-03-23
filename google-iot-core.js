@@ -399,8 +399,14 @@ module.exports = function (RED) {
         this.qos = n.qos || null;
         this.retain = n.retain;
         this.broker = n.broker;
+        this.subfolder = n.subfolder;
         this.brokerConn = RED.nodes.getNode(this.broker);
-        this.topic = '/devices/' + this.brokerConn.deviceid + '/events';
+
+        if (this.subfolder) {
+            this.topic = '/devices/' + this.brokerConn.deviceid + '/events/' + this.subfolder;
+        } else {
+            this.topic = '/devices/' + this.brokerConn.deviceid + '/events';
+        }
         var node = this;
 
         if (this.brokerConn) {
